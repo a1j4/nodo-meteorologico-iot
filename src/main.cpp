@@ -31,6 +31,23 @@ bool detectAnomaly(const SensorData& current, const SensorData& previous) {
     return false;
 }
 
+String calculateTrend(const SensorData& current, const SensorData& previous) {
+
+    if (!hasLastMeasurement) {
+        return "sin_datos";
+    }
+
+    float deltaTemp = current.temperature - previous.temperature;
+
+    if (deltaTemp > 0.5) {
+        return "subiendo";
+    } else if (deltaTemp < -0.5) {
+        return "bajando";
+    } else {
+        return "estable";
+    }
+}
+
 SensorData sampleAndFilter() {
 
     SensorData samples[SAMPLE_COUNT];
@@ -123,17 +140,35 @@ void analyzeTrend(){
         Serial.println("Humedad estable");
     }
 }
-String preparePayload(const SensorData& data, bool anomaly, String trend) {
+String generateSignature(String payload) {
+    int hash = 0;
 
+    for (int i = 0; i < payload.length(); i++) {
+        hash += payload[i] * (i + 1);
+    }
+
+    return String(hash);
+}
+String preparePayload(const SensorData& data, bool anomaly, String trend) {
+    DateTime now = rtc.now();
     String payload = "{";
 
     payload += "\"temp\":" + String(data.temperature, 2) + ",";
     payload += "\"hum\":" + String(data.humidity, 2) + ",";
     payload += "\"pres\":" + String(data.pressure, 2) + ",";
+    payload += "\"hora\":\"" + String(now.hour()) + ":" + String(now.minute()) + "\",";
+    payload += "\"fecha\":\"" + String(now.day()) + "/" + String(now.month()) + "/" + String(now.year()) + "\",";
     payload += "\"trend\":\"" + trend + "\",";
     payload += "\"anomaly\":" + String(anomaly ? "true" : "false");
 
     payload += "}";
+    // 🔐 Generar firma
+    String signature = generateSignature(payload);
+
+    // Agregar firma al final
+    payload = payload.substring(0, payload.length() - 1);
+    payload += ",\"sig\":\"" + signature + "\"}";
+
 
     return payload;
 }
@@ -192,6 +227,7 @@ void setup() {
     }
 
     bool anomalyDetected = false;
+    String trend = calculateTrend(currentData, lastMeasurement);
 
     if (hasLastMeasurement) {
         anomalyDetected = detectAnomaly(currentData, lastMeasurement);
@@ -205,7 +241,7 @@ void setup() {
 
     
 
-    String payload = preparePayload(currentData, anomalyDetected,"estable");
+    String payload = preparePayload(currentData, anomalyDetected,trend);
     Serial.println(" Datos listos para enviar:");
     Serial.println(payload);
 

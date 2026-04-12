@@ -1,5 +1,8 @@
 #ifndef CONFIG_H
 #define CONFIG_H
+#define DEVICE_ID "ESTACION_01"
+#define API_KEY "ULEAM_2026"
+
 //CONFIGURACION GENERAL VA ANTES
  #define SENSOR_READ_INTERVAL 2000 //milidegundos
  //definir el numero de pines del ESP32 
