@@ -1,36 +1,38 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <RTClib.h>
-#include <esp_sleep.h>
+#include <esp_sleep.h>//control del modo deep slepp
+
 #include "utils/Config.h"
 #include "processing/DataProcessor.h"
 #include "utils/SensorData.h"
 #include "sensors/SensorManager.h"
 #include "storage/DataBuffer.h"
 
-DataBuffer buffer;
+
+DataBuffer buffer;// almacenan varias mediciones
 
 
 
-void goToSleep();
+void goToSleep();//funcion de estado deep sleep
 
-// ===== OBJETO =====
+// controla la lectura de sensores
 SensorManager sensorManager;
 
 // ===== RTC =====
-RTC_DS3231 rtc;
-RTC_DATA_ATTR int lastMeasuredHour = -1;
-RTC_DATA_ATTR SensorData lastMeasurement;
-RTC_DATA_ATTR bool hasLastMeasurement = false;
+RTC_DS3231 rtc; //obj reloj
+RTC_DATA_ATTR int lastMeasuredHour = -1;//guarda la hora ultima medicion
+RTC_DATA_ATTR SensorData lastMeasurement;//ultima medicion
+RTC_DATA_ATTR bool hasLastMeasurement = false;// encarga de indicar si existen datos previos
 
-// ===== ANOMALÍAS =====
+// ===== detecta las anomalias =====
 bool detectAnomaly(const SensorData& current, const SensorData& previous) {
     if (abs(current.temperature - previous.temperature) > 2.0) return true;
     if (abs(current.humidity - previous.humidity) > 5.0) return true;
     if (abs(current.pressure - previous.pressure) > 4.0) return true;
     return false;
 }
-
+//calcula  la tendecias
 String calculateTrend(const SensorData& current, const SensorData& previous) {
 
     if (!hasLastMeasurement) {
@@ -47,10 +49,10 @@ String calculateTrend(const SensorData& current, const SensorData& previous) {
         return "estable";
     }
 }
-
+// encarga de filtrar datos
 SensorData sampleAndFilter() {
 
-    SensorData samples[SAMPLE_COUNT];
+    SensorData samples[SAMPLE_COUNT];//arrelogo de muestras
 
     // 1️⃣ Estabilización del sensor
     delay(SENSOR_STABILIZATION_TIME);
@@ -108,6 +110,7 @@ SensorData sampleAndFilter() {
 
     return filtered;
 }
+//analiza la detecion de tecnicas generales compara datos de la anterior medida  ejemplo: 25C, 22.5C, 25.5C la diferensia es 0.5
 void analyzeTrend(){
      int size = buffer.size();
 
@@ -116,8 +119,8 @@ void analyzeTrend(){
         return;
     }
 
-    SensorData first = buffer.get(0);
-    SensorData last  = buffer.get(size - 1);
+    SensorData first = buffer.get(0);//dato más atiguo
+    SensorData last  = buffer.get(size - 1);//EL ULTIMO DATO
 
     float tempDiff = last.temperature - first.temperature;
     float humDiff  = last.humidity - first.humidity;
@@ -140,6 +143,7 @@ void analyzeTrend(){
         Serial.println("Humedad estable");
     }
 }
+//sirve para  detectar si algien maipulo manualmente  los datos 
 String generateSignature(String payload) {
     int hash = 0;
 
@@ -149,6 +153,7 @@ String generateSignature(String payload) {
 
     return String(hash);
 }
+//se encarga de generar el dato JSON
 String preparePayload(const SensorData& data, bool anomaly, String trend) {
     DateTime now = rtc.now();
     String payload = "{";
@@ -175,10 +180,10 @@ String preparePayload(const SensorData& data, bool anomaly, String trend) {
 
 void setup() {
 
-    Serial.begin(115200);
+    Serial.begin(115200);//inicia la comunicacion
     Wire.begin();
 
-    if (!rtc.begin()) {
+    if (!rtc.begin()) {//detecta si el relod funciona, se detiene si no funciona
         Serial.println("No se encontró el RTC");
         while (1);
     }
@@ -205,18 +210,17 @@ void setup() {
 
     if (!shouldMeasure) {
         Serial.println("No es hora de medir");
-        goToSleep();
+        goToSleep();//controla la hora de medición
     }
 
     Serial.println("Realizando medición programada...");
 
-    sensorManager.begin();
-
+    sensorManager.begin();// realiza las mediciones
     SensorData currentData = sampleAndFilter();
 
     DataProcessor processor;
-    currentData = processor.validate(currentData);
-    if(currentData.valid){
+    currentData = processor.validate(currentData);// verifica que los datos sean correctos
+    if(currentData.valid){//verifica si ahy datos anomalos
         buffer.add(currentData);
         analyzeTrend();
     }
@@ -227,7 +231,7 @@ void setup() {
     }
 
     bool anomalyDetected = false;
-    String trend = calculateTrend(currentData, lastMeasurement);
+    String trend = calculateTrend(currentData, lastMeasurement);//compara datos anomalos anteriores
 
     if (hasLastMeasurement) {
         anomalyDetected = detectAnomaly(currentData, lastMeasurement);
@@ -241,22 +245,19 @@ void setup() {
 
     
 
-    String payload = preparePayload(currentData, anomalyDetected,trend);
+    String payload = preparePayload(currentData, anomalyDetected,trend);//prepara el dato JSON
     Serial.println(" Datos listos para enviar:");
     Serial.println(payload);
-
    
 
-    
-
-    lastMeasurement = currentData;
+    lastMeasurement = currentData;// guarda la medicion actual
     hasLastMeasurement = true;
 
     goToSleep();
 }
 
 
-
+//controla el estado del ESP32 
 void goToSleep() {
     Serial.println("Entrando en Deep Sleep...");
     esp_sleep_enable_timer_wakeup(60*1000000ULL);

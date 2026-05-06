@@ -1,6 +1,6 @@
 #include "SensorManager.h"
 #include <Arduino.h>
-
+//se encarga de encender y berificar que estan listo para comensar con la lectura
 SensorManager::SensorManager() {
     initialized = false;
 }

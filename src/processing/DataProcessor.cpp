@@ -1,6 +1,6 @@
 #include "DataProcessor.h"
 
-//Modulo de validaciones de datos
+//Modulo de validaciones de datos, deside si la medicion es valida o no antes de usarla 
 SensorData DataProcessor::validate(const SensorData& data){
     SensorData processed = data;//Copiamos los datos originales
     processed.valid= true;//Asumimos que es válido

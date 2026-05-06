@@ -4,8 +4,8 @@
 #include "ISensor.h"
 
 #include "../utils/SensorData.h"
-
-class SensorManager {
+//inicializa los sensores 
+class SensorManager {//se encarga de leer los sensores y devolver los datos
 private:
     bool initialized;
     DHTSensor dht;
