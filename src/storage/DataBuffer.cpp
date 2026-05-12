@@ -1,30 +1,45 @@
-#include <Arduino.h>
 #include "DataBuffer.h"
-//implementa una memoria circular
-//Guarda hasta 10 datos y cuando se llena, empieza a sobrescribir los más antiguos
-DataBuffer::DataBuffer(){
-    index =0;// primera posicion donde se guarda 
-    count =0;//no hay dato
+
+// 1. Definición de las variables globales en memoria RTC (solo se inicializan una vez)
+RTC_DATA_ATTR SensorData rtc_buffer[BUFFER_SIZE];
+RTC_DATA_ATTR int rtc_index = 0;
+RTC_DATA_ATTR int rtc_count = 0;
+
+// Implementación de la memoria circular
+DataBuffer::DataBuffer() {
+    // No reseteamos index ni count aquí porque borraríamos los datos al despertar del Deep Sleep
 }
-// guarda los datos en la pocicion actual
-void DataBuffer::add(const SensorData& data){
-    buffer[index]=data;
-    index = (index + 1) %  BUFFER_SIZE;
-    if(count < BUFFER_SIZE){//cuaenta cuantos datos hay
-        count++;
+
+// Guarda los datos en la posición actual usando la memoria RTC
+void DataBuffer::add(const SensorData& data) {
+    rtc_buffer[rtc_index] = data;
+    rtc_index = (rtc_index + 1) % BUFFER_SIZE;
+    if (rtc_count < BUFFER_SIZE) {
+        rtc_count++;
     }
-}//permite obtener un dato del y verificar si existe o no el dato
-SensorData DataBuffer::get(int position){
-    if (position < 0 ||position >= count)
-    {
+}
+
+// Permite obtener un dato y verificar si existe
+SensorData DataBuffer::get(int position) {
+
+    if (position < 0 || position >= rtc_count) {
+
         SensorData empty;
-        empty.valid=false;
+
+        empty.valid = false;
+
         return empty;
     }
-    
-    return buffer[position];
+
+    // Calcular posición real en buffer circular
+    int realIndex =
+        (rtc_index - rtc_count + position + BUFFER_SIZE)
+        % BUFFER_SIZE;
+
+    return rtc_buffer[realIndex];
 }
-//debuelbe cuantos datos hay guardados 
-int DataBuffer::size(){
-    return count;
+
+// Devuelve cuántos datos hay guardados 
+int DataBuffer::size() {
+    return rtc_count;
 }

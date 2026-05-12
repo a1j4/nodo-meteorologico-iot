@@ -1,19 +1,36 @@
 #include "DHTSensor.h"
 #include <Arduino.h>
 
-void DHTSensor::begin() {
-    // Aquí irá la inicialización real cuando compres el sensor
+// Constructor
+DHTSensor::DHTSensor()
+    : _dht(DHT_PIN, DHT_TYPE) {
 }
 
+// Inicialización del sensor
+void DHTSensor::begin() {
+
+    _dht.begin();
+}
+
+// Lectura del sensor
 SensorData DHTSensor::read() {
 
     SensorData data;
-    // Por ahora marcamos como inválido
-    data.temperature = 0;
-    data.humidity = 0;
+
+    // Lecturas reales del DHT22
+    data.humidity = _dht.readHumidity();
+    data.temperature = _dht.readTemperature();
+
+    // Como aún no tienes sensor de presión
     data.pressure = 0;
+
+    // Timestamp
     data.timestamp = millis();
-    data.valid = false;
+
+    // Validación
+    data.valid =
+        !isnan(data.humidity) &&
+        !isnan(data.temperature);
 
     return data;
 }

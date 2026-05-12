@@ -1,26 +1,17 @@
 #include "SensorManager.h"
-#include <Arduino.h>
-//se encarga de encender y berificar que estan listo para comensar con la lectura
+
 SensorManager::SensorManager() {
-    initialized = false;
 }
 
 void SensorManager::begin() {
-    dht.begin();       // ✅ Inicializar sensor aquí (correcto)
-    initialized = true;
+    dht.begin();
 }
 
 SensorData SensorManager::readSensors() {
 
-    SensorData data;
+    SensorData data = dht.read();
 
-    if (!initialized) {
-        data.valid = false;
-        return data;
-    }
-
-    // ✅ Leer desde el sensor real (o simulado por ahora)
-    data = dht.read();
+    data.timestamp = millis();
 
     return data;
 }

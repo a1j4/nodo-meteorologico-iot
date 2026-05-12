@@ -2,9 +2,13 @@
 #define ISENSOR_H
 
 #include "../utils/SensorData.h"
-// es una plantilla  es como un contrato  que permite la abtraccion y facilita la integracion de nuevos dispositivos si alterar la logica del sistema principal
+
+// Interfaz (Contrato) para sensores
 class ISensor {
 public:
+    // Destructor virtual: importante para que la memoria se limpie bien
+    virtual ~ISensor() {} 
+
     virtual void begin() = 0;
     virtual SensorData read() = 0;
 };

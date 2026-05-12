@@ -1,19 +1,36 @@
 #ifndef CONFIG_H
 #define CONFIG_H
+
+// ==========================
+// IDENTIFICACIÓN DEL NODO
+// ==========================
+
 #define DEVICE_ID "ESTACION_01"
 #define API_KEY "ULEAM_2026"
 
-//CONFIGURACION GENERAL VA ANTES
- #define SENSOR_READ_INTERVAL 2000 //milidegundos
- //definir el numero de pines del ESP32 
- #define DHT_PIN 8 //cambiar este número
- //tipo de sensor 
- #define SENSOR_TYPE_DHT 1
-#define WAKE_INTERVAL 60//SEGUNDOS
+// ==========================
+// CONFIGURACIÓN DE TIEMPOS
+// ==========================
 
- //configuracón del muestreo al momento de estabilizarse
- #define SENSOR_STABILIZATION_TIME 2000 // define la estabilisacion del sensor en 2 segundos
- #define SAMPLE_COUNT 5 // define el número de muestra durarte la estabilizacion del sensor
- #define SAMPLE_INTERVAL 500 //define el mili segundos entre muestras tomadas
- #endif
+#define SENSOR_READ_INTERVAL 2000
+#define WAKE_INTERVAL 60
 
+#define SENSOR_STABILIZATION_TIME 2000
+#define SAMPLE_COUNT 5
+#define SAMPLE_INTERVAL 500
+
+// ==========================
+// CONFIGURACIÓN DEL DHT22
+// ==========================
+
+#define DHT_PIN 23
+#define DHT_TYPE DHT22
+
+// ==========================
+// CONFIGURACIÓN LORA
+// ==========================
+
+#define LORA_RX 16
+#define LORA_TX 17
+
+#endif
