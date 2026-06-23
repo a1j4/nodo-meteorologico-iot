@@ -1,8 +1,9 @@
 #include <Arduino.h>
-#include <Wire.h>
-#include <RTClib.h>
-#include <esp_sleep.h>
 #include <DHT.h>
+#include <RTClib.h>
+#include <Wire.h>
+#include <esp_sleep.h>
+
 
 #include "utils/Config.h"
 #include "utils/SensorData.h"
@@ -47,44 +48,41 @@ RTC_DATA_ATTR bool hasLastMeasurement = false;
 // ============== DETECCIÓN DE ANOMALÍAS ===============
 // ======================================================
 
-bool detectAnomaly(const SensorData& current,
-                  const SensorData& previous) {
+bool detectAnomaly(const SensorData &current, const SensorData &previous) {
 
-    if (abs(current.temperature - previous.temperature) > 2.0)
-        return true;
- 
-    if (abs(current.humidity - previous.humidity) > 5.0)
-        return true;
- 
-    return false;
+  if (abs(current.temperature - previous.temperature) > 2.0)
+    return true;
+
+  if (abs(current.humidity - previous.humidity) > 5.0)
+    return true;
+
+  return false;
 }
 
 // ======================================================
 // ================= CÁLCULO DE TENDENCIA ==============
 // ======================================================
 
-String calculateTrend(const SensorData& current,
-                      const SensorData& previous) {
+String calculateTrend(const SensorData &current, const SensorData &previous) {
 
-    if (!hasLastMeasurement) {
-        return "sin_datos";
-    }
+  if (!hasLastMeasurement) {
+    return "sin_datos";
+  }
 
-    float deltaTemp =
-        current.temperature - previous.temperature;
+  float deltaTemp = current.temperature - previous.temperature;
 
-    if (deltaTemp > 0.5) {
+  if (deltaTemp > 0.5) {
 
-        return "subiendo";
+    return "subiendo";
 
-    } else if (deltaTemp < -0.5) {
+  } else if (deltaTemp < -0.5) {
 
-        return "bajando";
+    return "bajando";
 
-    } else {
+  } else {
 
-        return "estable";
-    }
+    return "estable";
+  }
 }
 
 // ======================================================
@@ -93,61 +91,57 @@ String calculateTrend(const SensorData& current,
 
 SensorData sampleAndFilter() {
 
-    SensorData samples[SAMPLE_COUNT];
+  SensorData samples[SAMPLE_COUNT];
 
-    // Estabilización
-    delay(SENSOR_STABILIZATION_TIME);
+  // Estabilización
+  delay(SENSOR_STABILIZATION_TIME);
 
-    // Toma de muestras
-    for (int i = 0; i < SAMPLE_COUNT; i++) {
+  // Toma de muestras
+  for (int i = 0; i < SAMPLE_COUNT; i++) {
 
-        samples[i] = sensorManager.readSensors();
+    samples[i] = sensorManager.readSensors();
 
-        delay(SAMPLE_INTERVAL);
-    }
+    delay(SAMPLE_INTERVAL);
+  }
 
-    // Variables iniciales
-    float minTemp = samples[0].temperature;
-    float maxTemp = samples[0].temperature;
- 
-    float minHum = samples[0].humidity;
-    float maxHum = samples[0].humidity;
- 
-    float sumTemp = 0;
-    float sumHum = 0;
+  // Variables iniciales
+  float minTemp = samples[0].temperature;
+  float maxTemp = samples[0].temperature;
 
-    // Recorrido de muestras
-    for (int i = 0; i < SAMPLE_COUNT; i++) {
- 
-        float t = samples[i].temperature;
-        float h = samples[i].humidity;
- 
-        minTemp = min(minTemp, t);
-        maxTemp = max(maxTemp, t);
- 
-        minHum = min(minHum, h);
-        maxHum = max(maxHum, h);
- 
-        sumTemp += t;
-        sumHum += h;
-    }
+  float minHum = samples[0].humidity;
+  float maxHum = samples[0].humidity;
 
-    // Media recortada
-    SensorData filtered;
- 
-    filtered.temperature =
-        (sumTemp - minTemp - maxTemp) /
-        (SAMPLE_COUNT - 2);
- 
-    filtered.humidity =
-        (sumHum - minHum - maxHum) /
-        (SAMPLE_COUNT - 2);
- 
-    filtered.timestamp = millis();
+  float sumTemp = 0;
+  float sumHum = 0;
 
-    filtered.valid = true;
+  // Recorrido de muestras
+  for (int i = 0; i < SAMPLE_COUNT; i++) {
 
-    return filtered;
+    float t = samples[i].temperature;
+    float h = samples[i].humidity;
+
+    minTemp = min(minTemp, t);
+    maxTemp = max(maxTemp, t);
+
+    minHum = min(minHum, h);
+    maxHum = max(maxHum, h);
+
+    sumTemp += t;
+    sumHum += h;
+  }
+
+  // Media recortada
+  SensorData filtered;
+
+  filtered.temperature = (sumTemp - minTemp - maxTemp) / (SAMPLE_COUNT - 2);
+
+  filtered.humidity = (sumHum - minHum - maxHum) / (SAMPLE_COUNT - 2);
+
+  filtered.timestamp = millis();
+
+  filtered.valid = true;
+
+  return filtered;
 }
 
 // ======================================================
@@ -156,108 +150,92 @@ SensorData sampleAndFilter() {
 
 void analyzeTrend() {
 
-    int size = buffer.size();
+  int size = buffer.size();
 
-    if (size < 3) {
+  if (size < 3) {
 
-        Serial.println(
-            "No hay suficientes datos para tendencia");
+    Serial.println("No hay suficientes datos para tendencia");
 
-        return;
-    }
+    return;
+  }
 
-    SensorData first = buffer.get(0);
+  SensorData first = buffer.get(0);
 
-    SensorData last = buffer.get(size - 1);
+  SensorData last = buffer.get(size - 1);
 
-    float tempDiff =
-        last.temperature - first.temperature;
+  float tempDiff = last.temperature - first.temperature;
 
-    float humDiff =
-        last.humidity - first.humidity;
+  float humDiff = last.humidity - first.humidity;
 
-    // Temperatura
-    if (tempDiff > 1.0) {
+  // Temperatura
+  if (tempDiff > 1.0) {
 
-        Serial.println("Temperatura en aumento");
+    Serial.println("Temperatura en aumento");
 
-    } else if (tempDiff < -1.0) {
+  } else if (tempDiff < -1.0) {
 
-        Serial.println("Temperatura en descenso");
+    Serial.println("Temperatura en descenso");
 
-    } else {
+  } else {
 
-        Serial.println("Temperatura estable");
-    }
+    Serial.println("Temperatura estable");
+  }
 
-    // Humedad
-    if (humDiff > 3.0) {
+  // Humedad
+  if (humDiff > 3.0) {
 
-        Serial.println("Humedad en aumento");
+    Serial.println("Humedad en aumento");
 
-    } else if (humDiff < -3.0) {
+  } else if (humDiff < -3.0) {
 
-        Serial.println("Humedad en descenso");
+    Serial.println("Humedad en descenso");
 
-    } else {
+  } else {
 
-        Serial.println("Humedad estable");
-    }
+    Serial.println("Humedad estable");
+  }
 }
 
 // ======================================================
 // ================= GENERACIÓN JSON ====================
 // ======================================================
 
-String preparePayload(const SensorData& data,
-                      bool anomaly,
-                      String trend) {
+String preparePayload(const SensorData &data, bool anomaly, String trend) {
 
-    // Fecha simulada temporalmente
-    int hora = 6;
-    int minuto = 0;
+  // Obtener fecha/hora del RTC
+  DateTime now = rtc.now();
+  int hora = now.hour();
+  int minuto = now.minute();
+  int dia = now.day();
+  int mes = now.month();
+  int anio = now.year();
 
-    int dia = 1;
-    int mes = 1;
-    int anio = 2025;
+  String payload = "{";
 
-    String payload = "{";
+  payload += "\"temp\":" + String(data.temperature, 2) + ",";
 
-    payload += "\"temp\":" +
-               String(data.temperature, 2) + ",";
+  payload += "\"hum\":" + String(data.humidity, 2) + ",";
 
-    payload += "\"hum\":" +
-               String(data.humidity, 2) + ",";
- 
-    payload += "\"hora\":\"" +
-               String(hora) + ":" +
-               String(minuto) + "\",";
+  payload += "\"hora\":\"" + String(hora) + ":" + String(minuto) + "\",";
 
-    payload += "\"fecha\":\"" +
-               String(dia) + "/" +
-               String(mes) + "/" +
-               String(anio) + "\",";
+  payload += "\"fecha\":\"" + String(dia) + "/" + String(mes) + "/" +
+             String(anio) + "\",";
 
-    payload += "\"trend\":\"" +
-               trend + "\",";
+  payload += "\"trend\":\"" + trend + "\",";
 
-    payload += "\"anomaly\":" +
-               String(anomaly ? "true" : "false");
+  payload += "\"anomaly\":" + String(anomaly ? "true" : "false");
 
-    payload += "}";
+  payload += "}";
 
-    // Firma de seguridad
-    String signature =
-        securityManager.generateSignature(payload);
+  // Firma de seguridad
+  String signature = securityManager.generateSignature(payload);
 
-    // Agregar firma
-    payload =
-        payload.substring(0, payload.length() - 1);
+  // Agregar firma
+  payload = payload.substring(0, payload.length() - 1);
 
-    payload += ",\"sig\":\"" +
-               signature + "\"}";
+  payload += ",\"sig\":\"" + signature + "\"}";
 
-    return payload;
+  return payload;
 }
 
 // ======================================================
@@ -266,12 +244,11 @@ String preparePayload(const SensorData& data,
 
 void goToSleep() {
 
-    Serial.println("Entrando en Deep Sleep...");
+  Serial.println("Entrando en Deep Sleep...");
 
-    esp_sleep_enable_timer_wakeup(
-        60 * 1000000ULL);
+  esp_sleep_enable_timer_wakeup(60 * 1000000ULL);
 
-    esp_deep_sleep_start();
+  esp_deep_sleep_start();
 }
 
 // ======================================================
@@ -280,157 +257,133 @@ void goToSleep() {
 
 void setup() {
 
-    // Comunicaciones
-    Serial.begin(115200);
+  // Comunicaciones
+  Serial.begin(115200);
 
-    Wire.begin();
+  Wire.begin();
 
-    delay(2000);
+  delay(2000);
 
-    Serial.println(
-        "=== INICIANDO ESTACIÓN METEOROLÓGICA ===");
+  Serial.println("=== INICIANDO ESTACIÓN METEOROLÓGICA ===");
 
-    // ==================================================
-    // =============== INICIALIZACIÓN LORA ==============
-    // ======= SOLO MODIFICAR ESTA SECCIÓN ==============
-    // ==================================================
+  // ==================================================
+  // =============== INICIALIZACIÓN LORA ==============
+  // ======= SOLO MODIFICAR ESTA SECCIÓN ==============
+  // ==================================================
 
-    loraManager.begin();
+  loraManager.begin();
 
-    // ==================================================
-    // ============= VALIDACIÓN DE MEDICIÓN =============
-    // ==================================================
+  // ==================================================
+  // ============= VALIDACIÓN DE MEDICIÓN =============
+  // ==================================================
 
-    // Obtener hora real del RTC
-    DateTime now = rtc.now();
-    int hora = now.hour();
-    int minuto = now.minute();
+  // Simulación temporal sin RTC
+  int hora = 6;
 
-    bool shouldMeasure = false;
+  int minuto = 1;
 
-    if ((hora == 6 ||
-         hora == 12 ||
-         hora == 18) &&
+  bool shouldMeasure = false;
 
-        (minuto >= 0 &&
-         minuto <= 2) &&
+  if ((hora == 6 || hora == 12 || hora == 18) &&
 
-        hora != lastMeasuredHour) {
+      (minuto >= 0 && minuto <= 2) &&
 
-        shouldMeasure = true;
+      hora != lastMeasuredHour) {
 
-        lastMeasuredHour = hora;
-    }
+    shouldMeasure = true;
 
-    if (!shouldMeasure) {
+    lastMeasuredHour = hora;
+  }
 
-        Serial.println("No es hora de medir");
+  if (!shouldMeasure) {
 
-        goToSleep();
-    }
+    Serial.println("No es hora de medir");
 
-    // ==================================================
-    // ================= LECTURA DE DATOS ===============
-    // ==================================================
-
-    Serial.println(
-        "Realizando medición programada...");
-
-    sensorManager.begin();
-
-    SensorData currentData =
-        sampleAndFilter();
-
-    currentData =
-        processor.validate(currentData);
-
-    if (currentData.valid) {
-
-        buffer.add(currentData);
-
-        analyzeTrend();
-
-    } else {
-
-        Serial.println(
-            "Error: sensor no válido");
-
-        goToSleep();
-    }
-
-    // ==================================================
-    // ========= DETECCIÓN DE ANOMALÍAS =================
-    // ==================================================
-
-    bool anomalyDetected = false;
-
-    String trend = "estable";
-
-    if (hasLastMeasurement) {
-
-        trend =
-            calculateTrend(currentData,
-                            lastMeasurement);
-
-        anomalyDetected =
-            detectAnomaly(currentData,
-                          lastMeasurement);
-    }
-
-    if (anomalyDetected) {
-
-        Serial.println(
-            "⚠ Anomalía detectada");
-
-    } else {
-
-        Serial.println(
-            "Medición estable");
-    }
-
-    // ==================================================
-    // ================ GENERACIÓN JSON =================
-    // ==================================================
-
-    String payload =
-        preparePayload(currentData,
-                       anomalyDetected,
-                       trend);
-
-    Serial.println(
-        "JSON generado:");
-
-    Serial.println(payload);
-
-    // ==================================================
-    // ============= TRANSMISIÓN LoRa ===================
-    // ===== SOLO MODIFICAR ESTA SECCIÓN ================
-    // ==================================================
-
-    Serial.println(
-        "Transmitiendo datos por LoRa...");
-
-    loraManager.sendPayload(payload);
-
-    // ==================================================
-    // ================ GUARDAR ESTADO ==================
-    // ==================================================
-
-    lastMeasurement = currentData;
-
-    hasLastMeasurement = true;
-
-    Serial.println(
-        "Proceso completado correctamente");
-
-    // Dormir
     goToSleep();
+  }
+
+  // ==================================================
+  // ================= LECTURA DE DATOS ===============
+  // ==================================================
+
+  Serial.println("Realizando medición programada...");
+
+  SensorData currentData = sampleAndFilter();
+
+  currentData = processor.validate(currentData);
+
+  if (currentData.valid) {
+
+    buffer.add(currentData);
+
+    analyzeTrend();
+
+  } else {
+
+    Serial.println("Error: sensor no válido");
+
+    goToSleep();
+  }
+
+  // ==================================================
+  // ========= DETECCIÓN DE ANOMALÍAS =================
+  // ==================================================
+
+  bool anomalyDetected = false;
+
+  String trend = "estable";
+
+  if (hasLastMeasurement) {
+
+    trend = calculateTrend(currentData, lastMeasurement);
+
+    anomalyDetected = detectAnomaly(currentData, lastMeasurement);
+  }
+
+  if (anomalyDetected) {
+
+    Serial.println("⚠ Anomalía detectada");
+
+  } else {
+
+    Serial.println("Medición estable");
+  }
+
+  // ==================================================
+  // ================ GENERACIÓN JSON =================
+  // ==================================================
+
+  String payload = preparePayload(currentData, anomalyDetected, trend);
+
+  Serial.println("JSON generado:");
+
+  Serial.println(payload);
+
+  // ==================================================
+  // ============= TRANSMISIÓN LoRa ===================
+  // ===== SOLO MODIFICAR ESTA SECCIÓN ================
+  // ==================================================
+
+  Serial.println("Transmitiendo datos por LoRa...");
+
+  loraManager.sendPayload(payload);
+
+  // ==================================================
+  // ================ GUARDAR ESTADO ==================
+  // ==================================================
+
+  lastMeasurement = currentData;
+
+  hasLastMeasurement = true;
+
+  Serial.println("Proceso completado correctamente");
+
+  // Dormir
+  goToSleep();
 }
 
 // ======================================================
 // ========================= LOOP =======================
 // ======================================================
 
-void loop() {
-
-}
+void loop() {}
