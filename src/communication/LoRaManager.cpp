@@ -1,7 +1,5 @@
 #include "LoRaManager.h"
-
-#define RXD2 16
-#define TXD2 17
+#include "../utils/Config.h"
 
 LoRaManager::LoRaManager(HardwareSerial* serialPort) {
     serial = serialPort;
@@ -9,7 +7,7 @@ LoRaManager::LoRaManager(HardwareSerial* serialPort) {
 
 void LoRaManager::begin() {
 
-    serial->begin(115200, SERIAL_8N1, RXD2, TXD2);
+    serial->begin(115200, SERIAL_8N1, LORA_RX, LORA_TX);
 
     delay(1000);
 

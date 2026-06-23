@@ -4,7 +4,6 @@
 #include <Wire.h>
 #include <esp_sleep.h>
 
-
 #include "utils/Config.h"
 #include "utils/SensorData.h"
 
@@ -54,6 +53,9 @@ bool detectAnomaly(const SensorData &current, const SensorData &previous) {
     return true;
 
   if (abs(current.humidity - previous.humidity) > 5.0)
+    return true;
+
+  if (abs(current.pressure - previous.pressure) > 4.0)
     return true;
 
   return false;
@@ -111,14 +113,19 @@ SensorData sampleAndFilter() {
   float minHum = samples[0].humidity;
   float maxHum = samples[0].humidity;
 
+  float minPres = samples[0].pressure;
+  float maxPres = samples[0].pressure;
+
   float sumTemp = 0;
   float sumHum = 0;
+  float sumPres = 0;
 
   // Recorrido de muestras
   for (int i = 0; i < SAMPLE_COUNT; i++) {
 
     float t = samples[i].temperature;
     float h = samples[i].humidity;
+    float p = samples[i].pressure;
 
     minTemp = min(minTemp, t);
     maxTemp = max(maxTemp, t);
@@ -126,8 +133,12 @@ SensorData sampleAndFilter() {
     minHum = min(minHum, h);
     maxHum = max(maxHum, h);
 
+    minPres = min(minPres, p);
+    maxPres = max(maxPres, p);
+
     sumTemp += t;
     sumHum += h;
+    sumPres += p;
   }
 
   // Media recortada
@@ -136,6 +147,8 @@ SensorData sampleAndFilter() {
   filtered.temperature = (sumTemp - minTemp - maxTemp) / (SAMPLE_COUNT - 2);
 
   filtered.humidity = (sumHum - minHum - maxHum) / (SAMPLE_COUNT - 2);
+
+  filtered.pressure = (sumPres - minPres - maxPres) / (SAMPLE_COUNT - 2);
 
   filtered.timestamp = millis();
 
@@ -216,6 +229,8 @@ String preparePayload(const SensorData &data, bool anomaly, String trend) {
 
   payload += "\"hum\":" + String(data.humidity, 2) + ",";
 
+  payload += "\"pres\":" + String(data.pressure, 2) + ",";
+
   payload += "\"hora\":\"" + String(hora) + ":" + String(minuto) + "\",";
 
   payload += "\"fecha\":\"" + String(dia) + "/" + String(mes) + "/" +
@@ -277,10 +292,11 @@ void setup() {
   // ============= VALIDACIÓN DE MEDICIÓN =============
   // ==================================================
 
-  // Simulación temporal sin RTC
-  int hora = 6;
-
-  int minuto = 1;
+  // Obtener hora actual del RTC
+  sensorManager.begin();
+  DateTime now = rtc.now();
+  int hora = now.hour();
+  int minuto = now.minute();
 
   bool shouldMeasure = false;
 
