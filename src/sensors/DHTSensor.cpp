@@ -20,10 +20,7 @@ SensorData DHTSensor::read() {
     // Lecturas reales del DHT22
     data.humidity = _dht.readHumidity();
     data.temperature = _dht.readTemperature();
-
-    // Como aún no tienes sensor de presión
-    data.pressure = 0;
-
+ 
     // Timestamp
     data.timestamp = millis();
 

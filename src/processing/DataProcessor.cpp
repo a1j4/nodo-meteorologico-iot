@@ -13,9 +13,5 @@ SensorData DataProcessor::validate(const SensorData& data){
     if (data.humidity<0||data.humidity>100){
         processed.valid=false;
     }
-    //Validación de presión
-    if (data.pressure<800||data.pressure>1200){
-        processed.valid=false;
-    }
     return processed;
 }
