@@ -6,7 +6,7 @@
 class SecurityManager {
 
 public:
-    String generateSignature(String payload);
+    String generateSignature(const String& payload);
 
 };
 

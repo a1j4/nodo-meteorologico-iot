@@ -1,11 +1,12 @@
 #include "SecurityManager.h"
 
-String SecurityManager::generateSignature(String payload) {
+String SecurityManager::generateSignature(const String& payload) {
 
-    int hash = 0;
+    uint32_t hash = 2166136261u;
 
-    for (int i = 0; i < payload.length(); i++) {
-        hash += payload[i] * (i + 1);
+    for (size_t i = 0; i < payload.length(); ++i) {
+        hash ^= static_cast<uint8_t>(payload[i]);
+        hash *= 16777619u;
     }
 
     return String(hash);
