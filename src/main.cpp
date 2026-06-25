@@ -35,7 +35,7 @@ RTC_DATA_ATTR static bool       hasLastMeasurement = false;
 static void goToSleep() {
     Serial.println("Entrando en deep sleep (60 s)...");
     Serial.flush();
-    esp_sleep_enable_timer_wakeup(60ULL * 1'000'000ULL);
+    esp_sleep_enable_timer_wakeup(60ULL * 1000000ULL);
     esp_deep_sleep_start();
 }
 
