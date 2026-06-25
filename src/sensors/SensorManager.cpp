@@ -1,17 +1,10 @@
 #include "SensorManager.h"
 
-SensorManager::SensorManager() {
-}
-
 void SensorManager::begin() {
     dht.begin();
 }
 
+// Delega la lectura al DHTSensor; el timestamp lo asigna sampleAndFilter() con el RTC
 SensorData SensorManager::readSensors() {
-
-    SensorData data = dht.read();
-
-    data.timestamp = millis();
-
-    return data;
+    return dht.read();
 }

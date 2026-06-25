@@ -2,9 +2,11 @@
 #define DATA_PROCESSOR_H
 
 #include "../utils/SensorData.h"
-//Recibir datos y devolverá datos procesados
-class DataProcessor{
-    public:
-    SensorData validate(const SensorData& data);
+
+// Valida que una lectura sea físicamente coherente antes de procesarla
+class DataProcessor {
+public:
+    SensorData validate(const SensorData& data) const;
 };
+
 #endif

@@ -1,32 +1,19 @@
 #include "DHTSensor.h"
 #include <Arduino.h>
 
-// Constructor
-DHTSensor::DHTSensor()
-    : _dht(DHT_PIN, DHT_TYPE) {
-}
+DHTSensor::DHTSensor() : _dht(DHT_PIN, DHT_TYPE) {}
 
-// Inicialización del sensor
 void DHTSensor::begin() {
-
     _dht.begin();
 }
 
-// Lectura del sensor
+// Retorna una lectura del DHT22. El timestamp lo asigna sampleAndFilter()
+// usando el RTC, por eso aquí se deja en 0.
 SensorData DHTSensor::read() {
-
     SensorData data;
-
-    // Lecturas reales del DHT22
-    data.humidity = _dht.readHumidity();
     data.temperature = _dht.readTemperature();
-    // Timestamp
-    data.timestamp = millis();
-
-    // Validación
-    data.valid =
-        !isnan(data.humidity) &&
-        !isnan(data.temperature);
-
+    data.humidity    = _dht.readHumidity();
+    data.timestamp   = 0;
+    data.valid       = !isnan(data.temperature) && !isnan(data.humidity);
     return data;
 }

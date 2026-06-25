@@ -1,36 +1,33 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-// ==========================
-// IDENTIFICACIÓN DEL NODO
-// ==========================
+// ── Identificación del nodo ───────────────────────────────────
+#define DEVICE_ID  "ESTACION_01"
+#define API_KEY    "ULEAM_2026"
 
-#define DEVICE_ID "ESTACION_01"
-#define API_KEY "ULEAM_2026"
+// ── Tiempos y muestreo ────────────────────────────────────────
+#define WAKE_INTERVAL              60
+#define SENSOR_STABILIZATION_TIME  2000
+#define SAMPLE_COUNT               5
+#define SAMPLE_INTERVAL            500
+#define MEASURE_WINDOW_MIN         2
 
-// ==========================
-// CONFIGURACIÓN DE TIEMPOS
-// ==========================
+// ── Umbrales de anomalías ─────────────────────────────────────
+#define ANOMALY_TEMP_DELTA  2.0f
+#define ANOMALY_HUM_DELTA   5.0f
 
-#define SENSOR_READ_INTERVAL 2000
-#define WAKE_INTERVAL 60
+// ── Rangos de validación del sensor ──────────────────────────
+#define TEMP_MIN   15.0f
+#define TEMP_MAX   45.0f
+#define HUM_MIN     0.0f
+#define HUM_MAX   100.0f
 
-#define SENSOR_STABILIZATION_TIME 2000
-#define SAMPLE_COUNT 5
-#define SAMPLE_INTERVAL 500
+// ── Sensor DHT22 ──────────────────────────────────────────────
+#define DHT_PIN   23
+#define DHT_TYPE  DHT22
 
-// ==========================
-// CONFIGURACIÓN DEL DHT22
-// ==========================
-
-#define DHT_PIN 23
-#define DHT_TYPE DHT22
-
-// ==========================
-// CONFIGURACIÓN LORA
-// ==========================
-
-#define LORA_RX 16
-#define LORA_TX 17
+// ── Comunicación LoRa (UART) ──────────────────────────────────
+#define LORA_RX  16
+#define LORA_TX  17
 
 #endif
